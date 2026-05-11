@@ -1,11 +1,13 @@
 import os
-
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+basedir = Path(__file__).resolve().parent.parent.parent
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file= basedir / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -21,3 +23,5 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 settings = Settings()
+
+print(settings.DB_PASSWORD)
