@@ -36,7 +36,7 @@ cp .env.example .env
 
 ### 3. Set up the database
 
-Run a local Supabase instance ([see](guide/SUPABASE_SELFHOST_GUIDE.md) `guide/SUPABASE_SELFHOST_GUIDE.md`), then apply migrations:
+Run a local Supabase instance (see [SUPABASE_SELFHOST_GUIDE.md]((guide/SUPABASE_SELFHOST_GUIDE.md))), then apply migrations:
 
 ```bash
 alembic upgrade head
