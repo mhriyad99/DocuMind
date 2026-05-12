@@ -28,5 +28,3 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET")
 
 settings = Settings()
-
-print(settings.DB_PASSWORD)
