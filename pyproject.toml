@@ -8,5 +8,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "fastapi[standard]>=0.136.1",
     "pgvector>=0.4.2",
+    "pwdlib[argon2]>=0.3.0",
+    "pyjwt>=2.12.1",
     "sqlalchemy>=2.0.49",
 ]

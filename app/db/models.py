@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pydantic import EmailStr
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     BigInteger,
@@ -34,7 +35,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = uuid_pk()
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    email: Mapped[EmailStr] = mapped_column(String(255), nullable=False, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -48,6 +49,9 @@ class User(Base):
     )
     documents: Mapped[list["Document"]] = relationship(
         "Document", back_populates="owner", cascade="all, delete-orphan", lazy="noload"
+    )
+    query_history: Mapped[list["QueryHistory"]] = relationship(
+        "QueryHistory", back_populates="user", cascade="all, delete-orphan", lazy="noload"
     )
 
 
