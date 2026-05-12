@@ -1,4 +1,5 @@
 import uuid
+import enum
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -14,6 +15,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    Enum,
     func,
 )
 from app.db.database import Base
@@ -30,6 +32,10 @@ def uuid_pk() -> Mapped[uuid.UUID]:
 def now_utc():
     return func.now()
 
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    USER = "user"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -37,6 +43,8 @@ class User(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     email: Mapped[EmailStr] = mapped_column(String(255), nullable=False, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_roles"),
+                                           nullable=False, default=UserRole.USER)
     full_name: Mapped[str] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
