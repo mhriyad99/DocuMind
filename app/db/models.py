@@ -1,5 +1,4 @@
 import uuid
-import enum
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -19,22 +18,8 @@ from sqlalchemy import (
     func,
 )
 from app.db.database import Base
-
-
-def uuid_pk() -> Mapped[uuid.UUID]:
-    return mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        index=True
-    )
-
-def now_utc():
-    return func.now()
-
-class UserRole(str, enum.Enum):
-    ADMIN = "admin"
-    USER = "user"
+from app.db import drop_downs
+from app.db.model_utils import uuid_pk, now_utc
 
 
 class User(Base):
@@ -43,8 +28,8 @@ class User(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     email: Mapped[EmailStr] = mapped_column(String(255), nullable=False, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_roles"),
-                                           nullable=False, default=UserRole.USER)
+    role: Mapped[drop_downs.UserRole] = mapped_column(Enum(drop_downs.UserRole, name="user_roles"),
+                                           nullable=False, default=drop_downs.UserRole.USER)
     full_name: Mapped[str] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -60,6 +45,15 @@ class User(Base):
     )
     query_history: Mapped[list["QueryHistory"]] = relationship(
         "QueryHistory", back_populates="user", cascade="all, delete-orphan", lazy="noload"
+    )
+    subscription: Mapped[Optional["Subscription"]] = relationship(
+        "Subscription", back_populates="user", uselist=False, lazy="noload"
+    )
+    api_keys: Mapped[list["UserApiKey"]] = relationship(
+        "UserApiKey", back_populates="user", cascade="all, delete-orphan", lazy="noload"
+    )
+    token_usage: Mapped[list["TokenUsageLog"]] = relationship(
+        "TokenUsageLog", back_populates="user", cascade="all, delete-orphan", lazy="noload"
     )
 
 
@@ -94,11 +88,6 @@ class Project(Base):
     )
 
 
-class DocumentStatus:
-    PROCESSING = "processing"
-    READY = "ready"
-    FAILED = "failed"
-
 class Document(Base):
     __tablename__ = "documents"
 
@@ -122,7 +111,7 @@ class Document(Base):
     status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
-        default=DocumentStatus.PROCESSING,
+        default=drop_downs.DocumentStatus.PROCESSING,
         index=True,
     )
     chunk_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -478,3 +467,5 @@ class ProjectInsights(Base):
             f"<ProjectInsights project={self.project_id} "
             f"version={self.version} published={self.is_published}>"
         )
+
+
