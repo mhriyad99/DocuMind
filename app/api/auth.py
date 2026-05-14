@@ -33,6 +33,7 @@ async def register(payload: user.UserRegister,
 
     db.add(new_user)
     await db.commit()
+    await db.refresh(new_user)
 
     return new_user
 
@@ -51,6 +52,6 @@ async def login(user_credentials: OAuth2PasswordRequestForm=Depends(),
     if not password_hash.verify(user_credentials.password, existing_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
 
-    access_token = create_access_token(data={"id": existing_user.id})
+    access_token = create_access_token(data={"id": str(existing_user.id)})
 
     return {"access_token": access_token}

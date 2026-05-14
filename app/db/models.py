@@ -28,7 +28,8 @@ class User(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     email: Mapped[EmailStr] = mapped_column(String(255), nullable=False, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[drop_downs.UserRole] = mapped_column(Enum(drop_downs.UserRole, name="user_roles"),
+    role: Mapped[drop_downs.UserRole] = mapped_column(Enum(drop_downs.UserRole, name="user_roles",
+                                           values_callable=lambda x: [e.value for e in x]),
                                            nullable=False, default=drop_downs.UserRole.USER)
     full_name: Mapped[str] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -55,7 +56,9 @@ class User(Base):
     token_usage: Mapped[list["TokenUsageLog"]] = relationship(
         "TokenUsageLog", back_populates="user", cascade="all, delete-orphan", lazy="noload"
     )
-
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(
+        "ChatSession", back_populates="user", cascade="all, delete-orphan", lazy="noload"
+    )
 
 class Project(Base):
     __tablename__ = "projects"
@@ -85,6 +88,9 @@ class Project(Base):
     )
     query_history: Mapped[list["QueryHistory"]] = relationship(
         "QueryHistory", back_populates="project", cascade="all, delete-orphan", lazy="noload"
+    )
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(
+        "ChatSession", back_populates="project", cascade="all, delete-orphan", lazy="noload"
     )
 
 
@@ -166,6 +172,39 @@ class Chunk(Base):
     project: Mapped["Project"] = relationship("Project", back_populates="chunks", lazy="noload")
 
 
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=now_utc()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=now_utc(), onupdate=now_utc()
+    )
+
+    # relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="chat_sessions", lazy="noload")
+    user: Mapped["User"] = relationship("User", back_populates="chat_sessions", lazy="noload")
+    messages: Mapped[list["QueryHistory"]] = relationship(
+        "QueryHistory", back_populates="session", cascade="all, delete-orphan", lazy="noload"
+    )
+
+
 class QueryHistory(Base):
     """
         Stores every question a user asked and the LLM answer returned.
@@ -215,8 +254,9 @@ class QueryHistory(Base):
     )
     session_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("chat_sessions.id", ondelete="SET NULL"),
         nullable=True,
-        default=None,
+        index=True,
     )
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)
@@ -258,6 +298,9 @@ class QueryHistory(Base):
     )
     user: Mapped["User"] = relationship(  # noqa: F821
         "User", back_populates="query_history", lazy="noload"
+    )
+    session: Mapped[Optional["ChatSession"]] = relationship(
+        "ChatSession", back_populates="messages", lazy="noload"
     )
 
     def __repr__(self) -> str:
