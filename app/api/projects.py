@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
@@ -121,3 +121,21 @@ async def get_project_details(
         chat_sessions=chat_sessions,
         document_count=len(documents),
     )
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(id: str, db: AsyncSession = Depends(get_db),
+                         current_user: models.User = Depends(get_current_user)):
+    project = await db.scalar(
+        select(models.Project)
+        .where(models.Project.id == id,
+               models.Project.user_id == current_user.id,)
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    await db.delete(project)
+    await db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
