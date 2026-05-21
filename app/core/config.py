@@ -26,5 +26,9 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY")
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET")
+    SUPABASE_BUCKET_NAME: str = os.getenv("SUPABASE_BUCKET_NAME")
+
+    MAX_FILES: int = os.getenv("MAX_FILES")
+    MAX_FILE_SIZE: int = os.getenv("MAX_FILE_SIZE")
 
 settings = Settings()
